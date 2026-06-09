@@ -187,6 +187,19 @@ export const getDB = () => {
 // Save database state
 export const saveDB = (dbState) => {
   localStorage.setItem(DB_KEY, JSON.stringify(dbState));
+  
+  // Push changes to the cloud database in the background
+  try {
+    fetch('https://jsonblob.com/api/jsonBlob/019eab04-eb75-74f7-8dcd-d0438937df4f', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(dbState)
+    }).catch(err => console.warn("Cloud database sync error:", err));
+  } catch (e) {
+    console.warn("Cloud database sync exception:", e);
+  }
 };
 
 // Haversine formula to calculate distance in meters between two points

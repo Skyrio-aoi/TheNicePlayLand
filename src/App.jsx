@@ -54,75 +54,142 @@ export default function App() {
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef(null);
 
-  // Initialize DB & apply theme on mount
+  // Initialize DB, pull from Cloud, & apply theme on mount
   useEffect(() => {
-    const initializedDb = initDB();
-    setDb(initializedDb);
-    
-    // Check if session exists in localStorage
-    const savedUser = localStorage.getItem('the_nice_playland_session');
-    let loggedInUser = null;
-    if (savedUser) {
+    const syncAndInit = async () => {
+      let activeDb = initDB();
+      
+      // Pull latest database from cloud to synchronize across devices
       try {
-        const parsedUser = JSON.parse(savedUser);
-        const matchedUser = initializedDb.users.find(u => u.id === parsedUser.id);
-        if (matchedUser) {
-          loggedInUser = matchedUser;
-          setCurrentUser(matchedUser);
+        const response = await fetch('https://jsonblob.com/api/jsonBlob/019eab04-eb75-74f7-8dcd-d0438937df4f');
+        if (response.ok) {
+          const cloudDb = await response.json();
+          if (cloudDb && cloudDb.settings && cloudDb.users) {
+            localStorage.setItem('the_nice_playland_db', JSON.stringify(cloudDb));
+            activeDb = cloudDb;
+            console.log("Database synced from cloud successfully!");
+          }
+        } else {
+          // If not initialized on cloud, push our local default database to cloud
+          fetch('https://jsonblob.com/api/jsonBlob/019eab04-eb75-74f7-8dcd-d0438937df4f', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(activeDb)
+          }).catch(console.error);
         }
       } catch (e) {
-        console.error("Error parsing saved session", e);
+        console.warn("Could not reach cloud database, running in offline/local-only mode", e);
       }
-    }
 
-    // Process Midtrans redirect query parameters
-    const params = new URLSearchParams(window.location.search);
-    const orderId = params.get('order_id');
-    const statusCode = params.get('status_code');
-    const transactionStatus = params.get('transaction_status');
-
-    if (orderId && (statusCode === '200' || statusCode === '201' || transactionStatus === 'settlement' || transactionStatus === 'capture')) {
-      const pendingDataStr = localStorage.getItem(`pending_tx_${orderId}`);
-      if (pendingDataStr) {
+      setDb(activeDb);
+      
+      // Check if session exists in localStorage
+      const savedUser = localStorage.getItem('the_nice_playland_session');
+      let loggedInUser = null;
+      if (savedUser) {
         try {
-          const pendingData = JSON.parse(pendingDataStr);
-          const existing = initializedDb.purchasedTickets.find(t => t.orderId === orderId);
-          if (!existing) {
-            const ticketId = 'PT-' + Math.floor(10000 + Math.random() * 90000);
-            const userId = pendingData.userId || (loggedInUser ? loggedInUser.id : 'u_cust1');
-            
-            const newPurchasedTicket = {
-              id: ticketId,
-              userId: userId,
-              ticketTypeId: pendingData.ticketTypeId,
-              ticketName: pendingData.ticketName,
-              price: pendingData.price,
-              purchaseDate: new Date().toISOString(),
-              visitDate: pendingData.visitDate,
-              quantity: pendingData.quantity,
-              totalAmount: pendingData.totalAmount,
-              status: 'active',
-              scannedAt: null,
-              orderId: orderId,
-              promoCode: pendingData.promoCode
-            };
-
-            initializedDb.purchasedTickets = [newPurchasedTicket, ...initializedDb.purchasedTickets];
-            localStorage.setItem('the_nice_playland_db', JSON.stringify(initializedDb));
-            setDb({ ...initializedDb });
-            
-            localStorage.removeItem(`pending_tx_${orderId}`);
-            localStorage.setItem('auto_open_qr_ticket', ticketId);
+          const parsedUser = JSON.parse(savedUser);
+          const matchedUser = activeDb.users.find(u => u.id === parsedUser.id);
+          if (matchedUser) {
+            loggedInUser = matchedUser;
+            setCurrentUser(matchedUser);
           }
         } catch (e) {
-          console.error("Error processing pending transaction redirect", e);
+          console.error("Error parsing saved session", e);
         }
       }
-      
-      // Clean query parameters from URL
-      const cleanUrl = window.location.origin + window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
-    }
+
+      // Process Midtrans redirect query parameters
+      const params = new URLSearchParams(window.location.search);
+      const orderId = params.get('order_id');
+      const statusCode = params.get('status_code');
+      const transactionStatus = params.get('transaction_status');
+
+      if (orderId && (statusCode === '200' || statusCode === '201' || transactionStatus === 'settlement' || transactionStatus === 'capture')) {
+        const pendingDataStr = localStorage.getItem(`pending_tx_${orderId}`);
+        if (pendingDataStr) {
+          try {
+            const pendingData = JSON.parse(pendingDataStr);
+            const existing = activeDb.purchasedTickets.find(t => t.orderId === orderId);
+            if (!existing) {
+              const ticketId = 'PT-' + Math.floor(10000 + Math.random() * 90000);
+              const userId = pendingData.userId || (loggedInUser ? loggedInUser.id : 'u_cust1');
+              
+              const newPurchasedTicket = {
+                id: ticketId,
+                userId: userId,
+                ticketTypeId: pendingData.ticketTypeId,
+                ticketName: pendingData.ticketName,
+                price: pendingData.price,
+                purchaseDate: new Date().toISOString(),
+                visitDate: pendingData.visitDate,
+                quantity: pendingData.quantity,
+                totalAmount: pendingData.totalAmount,
+                status: 'active',
+                scannedAt: null,
+                orderId: orderId,
+                promoCode: pendingData.promoCode
+              };
+
+              const updatedTicketsDb = {
+                ...activeDb,
+                purchasedTickets: [newPurchasedTicket, ...activeDb.purchasedTickets]
+              };
+
+              // Save locally
+              localStorage.setItem('the_nice_playland_db', JSON.stringify(updatedTicketsDb));
+              setDb(updatedTicketsDb);
+              
+              // Push to cloud
+              fetch('https://jsonblob.com/api/jsonBlob/019eab04-eb75-74f7-8dcd-d0438937df4f', {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedTicketsDb)
+              }).catch(console.error);
+              
+              localStorage.removeItem(`pending_tx_${orderId}`);
+              localStorage.setItem('auto_open_qr_ticket', ticketId);
+            }
+          } catch (e) {
+            console.error("Error processing pending transaction redirect", e);
+          }
+        }
+        
+        // Clean query parameters from URL
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    };
+
+    syncAndInit();
+  }, []);
+
+  // Poll cloud database for updates every 8 seconds to synchronize laptop & mobile screens
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch('https://jsonblob.com/api/jsonBlob/019eab04-eb75-74f7-8dcd-d0438937df4f');
+        if (response.ok) {
+          const cloudDb = await response.json();
+          const currentLocalStr = localStorage.getItem('the_nice_playland_db');
+          const cloudDbStr = JSON.stringify(cloudDb);
+          
+          if (currentLocalStr !== cloudDbStr && cloudDb && cloudDb.settings && cloudDb.users) {
+            localStorage.setItem('the_nice_playland_db', cloudDbStr);
+            setDb(cloudDb);
+            console.log("Database synchronized from cloud (background update)!");
+          }
+        }
+      } catch (e) {
+        console.warn("Background cloud sync poll failed:", e);
+      }
+    }, 8000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   // Apply CSS theme class
