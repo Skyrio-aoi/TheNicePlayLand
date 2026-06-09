@@ -799,3 +799,62 @@ body.light-mode .chat-message.bot {
   font-weight: 600;
 }
 
+/* Responsive Grids & Layouts for Android/Mobile Screens */
+.portal-grid {
+  display: grid;
+  grid-template-columns: 2.1fr 0.9fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.karyawan-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1.9fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.scanner-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.admin-grid-two-col {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  align-items: stretch;
+}
+
+/* Collapse columns to single block on phones and tablets */
+@media (max-width: 992px) {
+  .portal-grid,
+  .karyawan-grid,
+  .scanner-grid,
+  .admin-grid-two-col {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Make header layout wrap cleanly on narrow screens */
+@media (max-width: 680px) {
+  header.glass-panel {
+    flex-direction: column !important;
+    gap: 16px !important;
+    padding: 16px !important;
+    text-align: center !important;
+  }
+  
+  header.glass-panel > div {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+  
+  header.glass-panel div[style*="text-align: right"] {
+    text-align: center !important;
+    align-items: center !important;
+  }
+}
+

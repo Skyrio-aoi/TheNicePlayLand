@@ -497,7 +497,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Graph & Target Coordinates Info Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', alignItems: 'stretch' }}>
+          <div className="admin-grid-two-col">
             
             {/* Custom SVG Line Chart widget */}
             <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
@@ -566,7 +566,7 @@ export default function AdminDashboard() {
       {/* TAB 2: QR CODE TICKET SCANNER */}
       {/* ========================================== */}
       {activeTab === 'scanner' && (
-        <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+        <div className="animate-fade-in scanner-grid" style={{ maxWidth: '1000px', margin: '0 auto' }}>
           
           {/* Scanner panel */}
           <div className="glass-panel" style={{ padding: '24px' }}>

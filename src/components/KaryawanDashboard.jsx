@@ -361,7 +361,7 @@ export default function KaryawanDashboard({ currentUser }) {
       {/* TAB 1: GPS ATTENDANCE */}
       {/* ========================================== */}
       {activeTab === 'gps' && (
-        <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.9fr', gap: '24px', alignItems: 'start' }}>
+        <div className="animate-fade-in karyawan-grid">
           
           {/* Attendance Action Panel */}
           <div className="glass-panel" style={{ padding: '20px' }}>
@@ -549,7 +549,7 @@ export default function KaryawanDashboard({ currentUser }) {
       {/* TAB 2: QR CODE TICKET SCANNER */}
       {/* ========================================== */}
       {activeTab === 'scanner' && (
-        <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '24px', alignItems: 'start' }}>
+        <div className="animate-fade-in scanner-grid">
           
           {/* Scanner Panel */}
           <div className="glass-panel" style={{ padding: '24px' }}>

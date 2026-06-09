@@ -440,7 +440,7 @@ export default function UserDashboard({ currentUser }) {
       </div>
 
       {/* Main Grid: Left Side and Right Side */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2.1fr 0.9fr', gap: '24px', alignItems: 'start' }}>
+      <div className="portal-grid">
         
         {/* LEFT COLUMN: ACTIVE PORTAL TAB */}
         <div>
