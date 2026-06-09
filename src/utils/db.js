@@ -11,8 +11,8 @@ const DEFAULT_DATABASE = {
     },
     attendanceRadiusMeters: 150,
     midtrans: {
-      clientKey: 'YOUR_MIDTRANS_CLIENT_KEY',
-      serverKey: 'YOUR_MIDTRANS_SERVER_KEY'
+      clientKey: import.meta.env.VITE_MIDTRANS_CLIENT_KEY || 'YOUR_MIDTRANS_CLIENT_KEY',
+      serverKey: import.meta.env.VITE_MIDTRANS_SERVER_KEY || 'YOUR_MIDTRANS_SERVER_KEY'
     }
   },
   

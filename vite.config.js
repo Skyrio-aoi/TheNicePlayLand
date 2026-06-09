@@ -1,25 +1,28 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import https from 'https'
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [
-    react(),
-    {
-      name: 'midtrans-api',
-      configureServer(server) {
-        server.middlewares.use((req, res, next) => {
-          if (req.url.startsWith('/api/midtrans-token')) {
-            let body = '';
-            req.on('data', chunk => {
-              body += chunk;
-            });
-            req.on('end', () => {
-              try {
-                const data = JSON.parse(body || '{}');
-                const serverKey = process.env.MIDTRANS_SERVER_KEY || 'YOUR_MIDTRANS_SERVER_KEY';
-                const authHeader = 'Basic ' + Buffer.from(serverKey + ':').toString('base64');
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+
+  return {
+    plugins: [
+      react(),
+      {
+        name: 'midtrans-api',
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            if (req.url.startsWith('/api/midtrans-token')) {
+              let body = '';
+              req.on('data', chunk => {
+                body += chunk;
+              });
+              req.on('end', () => {
+                try {
+                  const data = JSON.parse(body || '{}');
+                  const serverKey = env.MIDTRANS_SERVER_KEY || 'YOUR_MIDTRANS_SERVER_KEY';
+                  const authHeader = 'Basic ' + Buffer.from(serverKey + ':').toString('base64');
                 
                 const postData = JSON.stringify({
                   transaction_details: {
@@ -86,4 +89,5 @@ export default defineConfig({
       }
     }
   ]
+  }
 })
